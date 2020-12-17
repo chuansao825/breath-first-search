@@ -16,8 +16,10 @@ struct Queue{
 
 //create a graph, return nthe adjacent matrix
 int** CreateGraph(int vertexnum);
-//breadth-first search , return an array 
+//breadth-first search , return an array  , start mark the beginning position in the result array
 void BreadthFirst(int vertexnum,int** graph,int vertex,int start,int* result,int* knownvertex);
+//
+int DepthFirst(int vertexnum,int** grapgh,int vertex,int start,int* result,int* knownvertex);
 //enter the queue
 void EnQueue(struct Queue* queue, int vertex);
 //delete the front data and return 
@@ -37,7 +39,8 @@ int main(void)
 	
 	int i = 0;
 	
-	//solve
+	//solve in two strategies
+	//the result array which stored the order
 	int* result = (int*)malloc(vertexnum*sizeof(int));
 	//the known array, 1 means known and 0 means unknown
 	//it is used to mark the vertex
@@ -46,12 +49,35 @@ int main(void)
 	for( i=0 ; i<vertexnum ; i++ )
 		knownvertex[i] = 0;
 	
+	
+	
+	//first take breadth-first search
 	BreadthFirst(vertexnum,graph,firstvertex,0,result,knownvertex);
 	//print the end
-	
+	printf("breadth-first search:");
 	for( i=0; i<vertexnum;i++ )
 		printf("v%d ",result[i]+1);
-		
+	
+	
+	//then take depth-first search
+	//renew the knownvertex array
+	for(i=0 ; i<vertexnum ; i++)
+		knownvertex[i] = 0;
+	int tempstart = DepthFirst(vertexnum,graph,firstvertex,0,result,knownvertex);
+	//check the knownvertex array
+	for(i=0;i<vertexnum;i++)
+	{
+		if(knownvertex[i]==0)
+		{
+			tempstart = DepthFirst(vertexnum,graph,i+1, tempstart,result,knownvertex);
+		}
+	}
+	printf("depth-first search:");
+	for( i=0; i<vertexnum;i++ )
+		printf("v%d ",result[i]+1);
+	
+	
+	
 	//end main
 	return 0;
 }
@@ -74,6 +100,42 @@ int** CreateGraph(int vertexnum)
 	
 }
 
+
+int DepthFirst(int vertexnum,int** grapgh,int firstvertex,int start,int* result,int* knownvertex)
+{
+	//create a queue
+	struct Queue* queue = (struct Queue*)malloc(sizeof(struct Queue));
+	queue->Array = (int*)malloc(sizeof(int)*vertexnum);
+	queue->Capacity = vertexnum;
+	queue->Front = 0;
+	queue->Rear = -1;
+	queue->Size = 0;
+	
+	int i,j;
+	
+	
+	//first vertex enter the queue
+	EnQueue(queue,firstvertex);
+	knownvertex[firstvertex-1] = 1;
+	//then the neighbors enter the queue
+	for(j=0;j<vertexnum;j++)
+	{
+		if(knownvertex[j] == 0 && grapgh[firstvertex-1][j]!=-1)
+		{
+			EnQueue(queue,j+1);
+			knownvertex[j] = 1;
+		}
+	}
+	
+	//get out of teh queue
+	result[start] = DeQueue(queue)-1;
+	start++;
+	
+	while(queue->Size != 0)
+		start = DepthFirst(vertexnum , grapgh , DeQueue(queue) , start , result , knownvertex );
+	
+	return start;
+}
 
 
 
@@ -169,5 +231,4 @@ int DeQueue(struct Queue* queue )
 		return result;
 	}
 }
-
 
